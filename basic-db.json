@@ -1,0 +1,73 @@
+{
+  "movies": [
+    {
+      "id": "mv-001",
+      "title": "Lat Mat 8",
+      "description": "Phim hanh dong - tam ly voi nhieu pha gay can.",
+      "duration": 125,
+      "imageUrl": "https://picsum.photos/seed/movie1/900/600",
+      "trailerUrl": "https://www.youtube.com/watch?v=example1",
+      "showtimes": ["09:00", "13:30", "20:15"],
+      "isNowShowing": true,
+      "isHot": true
+    },
+    {
+      "id": "mv-002",
+      "title": "Nha Gia Tien",
+      "description": "Phim tinh cam - gia dinh, nhieu cung bac cam xuc.",
+      "duration": 110,
+      "imageUrl": "https://picsum.photos/seed/movie2/900/600",
+      "trailerUrl": "https://www.youtube.com/watch?v=example2",
+      "showtimes": ["10:15", "15:00", "21:00"],
+      "isNowShowing": true,
+      "isHot": false
+    },
+    {
+      "id": "mv-003",
+      "title": "Cuoc Dua Bong Dem",
+      "description": "Phim hinh su, gay can, nhieu nut that bat ngo.",
+      "duration": 118,
+      "imageUrl": "https://picsum.photos/seed/movie3/900/600",
+      "trailerUrl": "https://www.youtube.com/watch?v=example3",
+      "showtimes": ["08:45", "14:00", "19:30"],
+      "isNowShowing": false,
+      "isHot": true
+    }
+  ],
+  "users": [
+    {
+      "id": "u-admin-001",
+      "fullName": "Quan tri Cinema",
+      "email": "admin@cinema.local",
+      "password": "admin123",
+      "role": "admin",
+      "bookings": []
+    },
+    {
+      "id": "u-user-001",
+      "fullName": "Nguyen Van A",
+      "email": "a@example.com",
+      "password": "123456",
+      "role": "user",
+      "bookings": [
+        {
+          "id": "bk-001",
+          "movieId": "1",
+          "movieTitle": "Lat Mat 8",
+          "movieImage": "https://picsum.photos/seed/movie1/900/600",
+          "showtime": "13:30",
+          "seats": ["A1", "A2"],
+          "createdAt": "2026-04-07T10:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "u-user-002",
+      "fullName": "Tran Thi B",
+      "email": "b@example.com",
+      "password": "123456",
+      "role": "user",
+      "bookings": []
+    }
+  ]
+}

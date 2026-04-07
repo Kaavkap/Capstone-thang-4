@@ -1,0 +1,93 @@
+﻿{
+  "api_config_sample": {
+    "base_url": "http://localhost:3001",
+    "token": "dev_token_cinema_2026",
+    "movies_path": "/movies",
+    "users_path": "/users"
+  },
+  "supported_field_mapping": {
+    "movies": {
+      "id": ["id", "movieId", "maPhim"],
+      "title": ["title", "tenPhim", "name"],
+      "description": ["description", "moTa", "desc"],
+      "duration": ["duration", "thoiLuong", "runningTime"],
+      "imageUrl": ["imageUrl", "hinhAnh", "image", "poster"],
+      "trailerUrl": ["trailerUrl", "trailer", "videoTrailer"],
+      "showtimes": ["showtimes", "lichChieu"],
+      "isNowShowing": ["isNowShowing", "nowShowing", "dangChieu"],
+      "isHot": ["isHot", "hot"]
+    },
+    "user": {
+      "id": ["id", "userId"],
+      "fullName": ["fullName", "hoTen", "name"],
+      "email": ["email", "taiKhoan"],
+      "password": ["password", "matKhau"],
+      "role": ["role", "maLoaiNguoiDung"],
+      "bookings": ["bookings", "veDaDat"],
+      "role_admin_values": ["admin", "QuanTri"]
+    },
+    "booking": {
+      "id": ["id", "bookingId"],
+      "userId": ["userId", "maNguoiDung"],
+      "userName": ["userName", "tenNguoiDung"],
+      "movieId": ["movieId", "maPhim"],
+      "movieTitle": ["movieTitle", "tenPhim"],
+      "movieImage": ["movieImage", "hinhAnh"],
+      "showtime": ["showtime", "suatChieu"],
+      "seats": ["seats"],
+      "createdAt": ["createdAt", "ngayDat"]
+    }
+  },
+  "movies": [
+    {
+      "id": "mv-001",
+      "title": "Lat Mat 8",
+      "description": "Phim hanh dong - tam ly.",
+      "duration": 125,
+      "imageUrl": "https://picsum.photos/seed/movie1/900/600",
+      "trailerUrl": "https://www.youtube.com/watch?v=example1",
+      "showtimes": ["09:00", "13:30", "20:15"],
+      "isNowShowing": true,
+      "isHot": true
+    },
+    {
+      "maPhim": 1002,
+      "tenPhim": "Nha Gia Tien",
+      "moTa": "Phim tinh cam - gia dinh.",
+      "thoiLuong": 110,
+      "hinhAnh": "https://picsum.photos/seed/movie2/900/600",
+      "trailer": "https://www.youtube.com/watch?v=example2",
+      "lichChieu": ["10:15", "15:00", "21:00"],
+      "dangChieu": true,
+      "hot": false
+    }
+  ],
+  "users": [
+    {
+      "id": "u-admin-001",
+      "fullName": "Quan tri Cinema",
+      "email": "admin@cinema.local",
+      "password": "admin123",
+      "role": "admin",
+      "bookings": []
+    },
+    {
+      "userId": "u-user-001",
+      "hoTen": "Nguyen Van A",
+      "taiKhoan": "a@example.com",
+      "matKhau": "123456",
+      "maLoaiNguoiDung": "KhachHang",
+      "bookings": [
+        {
+          "id": "bk-001",
+          "movieId": "1",
+          "movieTitle": "Lat Mat 8",
+          "movieImage": "https://picsum.photos/seed/movie1/900/600",
+          "showtime": "13:30",
+          "seats": ["A1", "A2"],
+          "createdAt": "2026-04-07T10:00:00.000Z"
+        }
+      ]
+    }
+  ]
+}

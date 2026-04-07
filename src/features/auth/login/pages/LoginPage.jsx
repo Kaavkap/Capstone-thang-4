@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import LoginForm from "../components/LoginForm";
 import { useAppStore } from "../../../../shared/context/AppStore";
@@ -39,7 +39,9 @@ function LoginPage() {
         </p>
         <p className="mt-2 text-xs font-semibold text-brand-700">Tài khoản admin mẫu: admin@cinema.local / admin123</p>
       </div>
+
       <LoginForm form={form} onChange={handleChange} onSubmit={handleSubmit} errorMessage={errorMessage} />
+
       <p className="mt-4 text-sm text-slate-600">
         Chưa có tài khoản?{" "}
         <Link to="/register" className="font-semibold text-brand-700 hover:underline">

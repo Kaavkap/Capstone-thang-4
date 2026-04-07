@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import RegisterForm from "../components/RegisterForm";
 import { useAppStore } from "../../../../shared/context/AppStore";
@@ -17,10 +17,10 @@ function RegisterPage() {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     setErrorMessage("");
-    const result = registerUser(form);
+    const result = await registerUser(form);
     if (!result.ok) {
       setErrorMessage(result.message);
       return;
@@ -36,7 +36,9 @@ function RegisterPage() {
           Tạo tài khoản người dùng để chọn ghế và đặt vé xem phim.
         </p>
       </div>
+
       <RegisterForm form={form} onChange={handleChange} onSubmit={handleSubmit} errorMessage={errorMessage} />
+
       <p className="mt-4 text-sm text-slate-600">
         Đã có tài khoản?{" "}
         <Link to="/login" className="font-semibold text-brand-700 hover:underline">

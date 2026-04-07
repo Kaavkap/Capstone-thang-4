@@ -6,7 +6,7 @@ import { useAppStore } from "../../../shared/context/AppStore";
 function BookingPage() {
   const { movieId } = useParams();
   const { movies, getBookedSeats, createBooking } = useAppStore();
-  const movie = useMemo(() => movies.find((item) => item.id === movieId), [movies, movieId]);
+  const movie = useMemo(() => movies.find((item) => String(item.id) === String(movieId)), [movies, movieId]);
   const [showtime, setShowtime] = useState(movie?.showtimes?.[0] || "");
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [statusMessage, setStatusMessage] = useState("");
@@ -43,8 +43,8 @@ function BookingPage() {
     );
   };
 
-  const handleBooking = () => {
-    const result = createBooking({
+  const handleBooking = async () => {
+    const result = await createBooking({
       movieId: movie.id,
       showtime,
       seats: selectedSeats
