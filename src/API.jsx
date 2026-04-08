@@ -71,6 +71,7 @@ function unwrapListPayload(payload) {
 async function requestAPI(method, path, body, errorFallback) {
   const { baseURL, token, authPrefix } = resolveConfig();
   const endpointPath = normalizePath(path);
+  const methodText = String(method || "").toLowerCase();
 
   if (!baseURL) {
     return { ok: false, data: null, message: "API chua duoc cau hinh BASE_URL." };
@@ -81,16 +82,22 @@ async function requestAPI(method, path, body, errorFallback) {
   }
 
   try {
-    const response = await axios({
-      method,
+    const shouldSendBody = ["post", "put", "patch"].includes(methodText);
+    const requestConfig = {
+      method: methodText,
       url: `${baseURL}${endpointPath}`,
-      data: body,
       timeout: 20000,
       headers: {
-        "Content-Type": "application/json",
         ...getAuthHeader(token, authPrefix)
       }
-    });
+    };
+
+    if (shouldSendBody) {
+      requestConfig.data = body;
+      requestConfig.headers["Content-Type"] = "application/json";
+    }
+
+    const response = await axios(requestConfig);
 
     return { ok: true, data: response.data, message: "" };
   } catch (error) {

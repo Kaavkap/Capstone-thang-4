@@ -27,19 +27,20 @@ function AdminMoviesPage() {
     setEditingMovie(null);
   };
 
-  const handleDeleteMovie = async (movieId) => {
+  const handleDeleteMovie = async (movie) => {
+    const movieId = String(movie?.id ?? movie?.movieId ?? movie?.maPhim ?? "").trim();
     const shouldDelete = window.confirm("Bạn có chắc muốn xóa phim này? Các vé liên quan sẽ bị xóa.");
     if (!shouldDelete) {
       return;
     }
 
-    const result = await deleteMovie(movieId);
+    const result = await deleteMovie(movie);
     if (!result.ok) {
       setStatusMessage(result.message);
       return;
     }
 
-    if (editingMovie?.id === movieId) {
+    if (movieId && String(editingMovie?.id ?? "") === movieId) {
       setEditingMovie(null);
     }
 

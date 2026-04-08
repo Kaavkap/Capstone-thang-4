@@ -40,6 +40,19 @@ function parseNumericId(value) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function getMovieIdFromAny(movie, fallbackValue = "") {
+  if (!movie || typeof movie !== "object") {
+    return String(fallbackValue || "").trim();
+  }
+
+  const idText = String(movie.id ?? movie.movieId ?? movie.maPhim ?? movie.slug ?? "").trim();
+  if (idText) {
+    return idText;
+  }
+
+  return String(fallbackValue || "").trim();
+}
+
 function getNextMovieId(movieList) {
   const maxId = movieList.reduce((maxValue, movie) => {
     const parsedId = parseNumericId(movie?.id);
@@ -98,10 +111,33 @@ function normalizeMovieFromAPI(movie) {
 
   return {
     ...normalized,
-    id: String(movie.id ?? movie.movieId ?? movie.maPhim ?? fallbackId),
+    id: getMovieIdFromAny(movie, fallbackId),
     createdAt: movie.createdAt ?? new Date().toISOString(),
     updatedAt: movie.updatedAt ?? new Date().toISOString()
   };
+}
+
+function normalizeMovieListForState(movieList) {
+  const sourceMovies = Array.isArray(movieList) ? movieList : [];
+  const usedIds = new Set();
+
+  return sourceMovies
+    .map((movie, index) => {
+      const fallbackId = `mv-local-${index + 1}`;
+      const baseId = getMovieIdFromAny(movie, fallbackId);
+      const normalizedMovie = normalizeMovieFromAPI({ ...movie, id: baseId });
+      let finalId = getMovieIdFromAny(normalizedMovie, fallbackId);
+      let duplicateSuffix = 1;
+
+      while (usedIds.has(finalId)) {
+        duplicateSuffix += 1;
+        finalId = `${baseId}-${duplicateSuffix}`;
+      }
+
+      usedIds.add(finalId);
+      return { ...normalizedMovie, id: finalId };
+    })
+    .filter((movie) => movie.title);
 }
 
 function normalizeUserFromAPI(user) {
@@ -172,7 +208,7 @@ function normalizeBookingFromAPI(booking) {
 export function AppStoreProvider({ children }) {
   const [movies, setMovies] = useState(() => {
     const loadedMovies = loadJSON(STORAGE_KEYS.movies, seedMovies);
-    return Array.isArray(loadedMovies) ? loadedMovies : seedMovies;
+    return normalizeMovieListForState(Array.isArray(loadedMovies) ? loadedMovies : seedMovies);
   });
 
   const [users, setUsers] = useState(() => {
@@ -208,7 +244,7 @@ export function AppStoreProvider({ children }) {
       return { ok: false, message: movieResult.message || "Khong tai duoc danh sach phim tu API." };
     }
 
-    const normalizedMovies = movieResult.data.map(normalizeMovieFromAPI).filter((movie) => movie.title);
+    const normalizedMovies = normalizeMovieListForState(movieResult.data);
     if (normalizedMovies.length === 0) {
       return { ok: false, message: "API khong tra ve danh sach phim hop le." };
     }
@@ -423,10 +459,53 @@ export function AppStoreProvider({ children }) {
     return { ok: true, movie: baseMovie };
   };
 
-  const deleteMovie = async (movieId) => {
-    const movieIdText = String(movieId);
+  const deleteMovie = async (movieOrId) => {
+    const requestedMovie = movieOrId && typeof movieOrId === "object" ? movieOrId : null;
+    const requestedMovieId = requestedMovie
+      ? getMovieIdFromAny(requestedMovie)
+      : String(movieOrId ?? "").trim();
+
+    const currentMovie =
+      movies.find((movie) => String(movie.id) === requestedMovieId) ||
+      (requestedMovie
+        ? movies.find(
+            (movie) =>
+              movie.title === requestedMovie.title &&
+              Number(movie.duration) === Number(requestedMovie.duration)
+          )
+        : null);
+
+    const movieIdText = currentMovie ? String(currentMovie.id) : requestedMovieId;
+    if (!currentMovie && !movieIdText) {
+      return { ok: false, message: "Khong xac dinh duoc phim can xoa." };
+    }
+
+    let syncWarning = "";
+
     if (isAPIConfigured()) {
-      const apiResult = await deleteMovieFromAPI(movieIdText);
+      let apiResult = movieIdText
+        ? await deleteMovieFromAPI(movieIdText)
+        : { ok: false, message: "Thieu ID phim de xoa." };
+
+      if (!apiResult.ok && isNotFoundErrorMessage(apiResult.message) && currentMovie) {
+        const remoteMovies = await fetchMoviesFromAPI();
+        if (remoteMovies.ok) {
+          const matchedMovie = remoteMovies.data
+            .map(normalizeMovieFromAPI)
+            .find(
+              (movie) =>
+                movie.title === currentMovie.title &&
+                Number(movie.duration) === Number(currentMovie.duration)
+            );
+
+          if (matchedMovie?.id) {
+            apiResult = await deleteMovieFromAPI(matchedMovie.id);
+          } else {
+            syncWarning = "Khong tim thay phim tuong ung tren API, da xoa local.";
+          }
+        }
+      }
+
       if (!apiResult.ok && !isNotFoundErrorMessage(apiResult.message)) {
         return { ok: false, message: apiResult.message || "Khong the xoa phim tren API." };
       }
@@ -444,23 +523,53 @@ export function AppStoreProvider({ children }) {
         );
         const payload = { ...user, bookings: nextUserBookings };
         const { id: _id, ...payloadNoId } = payload;
-        await updateUserToAPI(user.id, payloadNoId);
+        const updateUserResult = await updateUserToAPI(user.id, payloadNoId);
+        if (!updateUserResult.ok) {
+          syncWarning = "Da xoa phim, nhung mot phan du lieu ve tren API chua dong bo duoc.";
+        }
       }
     }
 
-    setMovies((prev) => prev.filter((movie) => String(movie.id) !== movieIdText));
+    const cleanupMovie = currentMovie || requestedMovie;
+
+    setMovies((prev) =>
+      prev.filter((movie) => {
+        if (movieIdText) {
+          return String(movie.id) !== movieIdText;
+        }
+        if (!cleanupMovie) {
+          return true;
+        }
+        return !(
+          movie.title === cleanupMovie.title &&
+          Number(movie.duration) === Number(cleanupMovie.duration)
+        );
+      })
+    );
+
     setUsers((prev) => {
       const nextUsers = prev.map((user) => {
         const userBookings = Array.isArray(user.bookings) ? user.bookings : [];
         return {
           ...user,
-          bookings: userBookings.filter((booking) => String(booking.movieId ?? booking.maPhim ?? "") !== movieIdText)
+          bookings: userBookings.filter((booking) => {
+            const bookingMovieId = String(booking.movieId ?? booking.maPhim ?? "");
+            const bookingMovieTitle = String(booking.movieTitle ?? booking.tenPhim ?? "");
+
+            if (movieIdText && bookingMovieId === movieIdText) {
+              return false;
+            }
+            if (!movieIdText && cleanupMovie?.title && bookingMovieTitle === cleanupMovie.title) {
+              return false;
+            }
+            return true;
+          })
         };
       });
       setBookings(extractBookingsFromUsers(nextUsers));
       return nextUsers;
     });
-    return { ok: true, message: "Da xoa phim." };
+    return { ok: true, message: syncWarning || "Da xoa phim." };
   };
 
   const getBookedSeats = (movieId, showtime) => {
